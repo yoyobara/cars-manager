@@ -4,6 +4,9 @@
 dist
 tmp
 out-tsc
+__pycache__/
+*.pyc
+.venv/
 
 # dependencies
 node_modules
