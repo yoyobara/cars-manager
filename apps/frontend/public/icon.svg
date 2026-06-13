@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="purple-pink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#0f132a" />
+  <circle cx="256" cy="256" r="210" fill="url(#purple-pink)" />
+  <path d="M374 246c-5-22-26-38-51-38H189c-25 0-46 16-51 38l-18 80h272l-18-80zm-185 4c8 0 15 7 15 15s-7 15-15 15-15-7-15-15 7-15 15-15zm134 0c8 0 15 7 15 15s-7 15-15 15-15-7-15-15 7-15 15-15z" fill="#0f132a" />
+  <path d="M120 330v40c0 11 9 20 20 20h20c11 0 20-9 20-20v-40h132v40c0 11 9 20 20 20h20c11 0 20-9 20-20v-40h30c11 0 20-9 20-20v-30H110v30c0 11 9 20 20 20h-10z" fill="#0f132a" />
+  <path d="M374 246c-5-22-26-38-51-38H189c-25 0-46 16-51 38l-18 80h272l-18-80zm-185 4c8 0 15 7 15 15s-7 15-15 15-15-7-15-15 7-15 15-15zm134 0c8 0 15 7 15 15s-7 15-15 15-15-7-15-15 7-15 15-15z" fill="#ffffff" transform="scale(0.8) translate(64, 64)" />
+  <path d="M120 330v40c0 11 9 20 20 20h20c11 0 20-9 20-20v-40h132v40c0 11 9 20 20 20h20c11 0 20-9 20-20v-40h30c11 0 20-9 20-20v-30H110v30c0 11 9 20 20 20h-10z" fill="#ffffff" transform="scale(0.8) translate(64, 64)" />
+</svg>
