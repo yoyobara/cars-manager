@@ -11,7 +11,7 @@ from app.routers import auth, cars, bookings, family, dashboard
 async def lifespan(app: FastAPI):
     # Initialize DB tables on startup if using postgres
     if settings.DATABASE_TYPE == "postgres":
-        init_db()
+        engine = init_db()
         Base.metadata.create_all(bind=engine)
     yield
 
@@ -20,7 +20,7 @@ app = FastAPI(
     title="Cars Manager API",
     description="Backend API for managing family cars and bookings",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS middleware configuration
