@@ -4,7 +4,10 @@ const ASSETS_TO_CACHE = [
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
-  '/icon.svg'
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png'
 ];
 
 // Install Service Worker and Cache Assets
