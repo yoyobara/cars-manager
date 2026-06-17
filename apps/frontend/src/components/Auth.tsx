@@ -33,7 +33,7 @@ export const Auth: React.FC = () => {
             throw new Error('Family name is required');
           }
           if (!registrationToken.trim()) {
-            throw new Error('Registration token is required to create a new family');
+            throw new Error('Family registration token is required to create a new family');
           }
           await register(name, email, password, familyName, undefined, registrationToken);
         } else {
@@ -251,9 +251,9 @@ export const Auth: React.FC = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Registration Token</label>
+                    <label className="form-label">Family Registration Token</label>
                     <input
-                      type="password"
+                      type="text"
                       className="form-input"
                       placeholder="Required for new families"
                       required={signUpMode === 'create'}
@@ -264,7 +264,7 @@ export const Auth: React.FC = () => {
                 </>
               ) : (
                 <div className="form-group">
-                  <label className="form-label">Invite Code</label>
+                  <label className="form-label">Invite Code / Token</label>
                   <input
                     type="text"
                     className="form-input"
