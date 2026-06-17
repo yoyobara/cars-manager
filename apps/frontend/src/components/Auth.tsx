@@ -17,6 +17,7 @@ export const Auth: React.FC = () => {
   const [signUpMode, setSignUpMode] = useState<'create' | 'join'>('create');
   const [familyName, setFamilyName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [registrationToken, setRegistrationToken] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +32,10 @@ export const Auth: React.FC = () => {
           if (!familyName.trim()) {
             throw new Error('Family name is required');
           }
-          await register(name, email, password, familyName);
+          if (!registrationToken.trim()) {
+            throw new Error('Registration token is required to create a new family');
+          }
+          await register(name, email, password, familyName, undefined, registrationToken);
         } else {
           if (!inviteCode.trim()) {
             throw new Error('Invite code is required');
@@ -234,17 +238,30 @@ export const Auth: React.FC = () => {
               </div>
 
               {signUpMode === 'create' ? (
-                <div className="form-group">
-                  <label className="form-label">Family Name</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Smith Family"
-                    required={signUpMode === 'create'}
-                    value={familyName}
-                    onChange={(e) => setFamilyName(e.target.value)}
-                  />
-                </div>
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Family Name</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Smith Family"
+                      required={signUpMode === 'create'}
+                      value={familyName}
+                      onChange={(e) => setFamilyName(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Registration Token</label>
+                    <input
+                      type="password"
+                      className="form-input"
+                      placeholder="Required for new families"
+                      required={signUpMode === 'create'}
+                      value={registrationToken}
+                      onChange={(e) => setRegistrationToken(e.target.value)}
+                    />
+                  </div>
+                </>
               ) : (
                 <div className="form-group">
                   <label className="form-label">Invite Code</label>

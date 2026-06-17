@@ -3,18 +3,16 @@ import string
 from uuid import UUID
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from jose import jwt, JWTError
 import bcrypt
 
 from app.config import settings
 from app.models.schemas import UserCreate, UserLogin, UserResponse, Token
 from app.repositories.dependency import get_user_repository, get_family_repository
+from app.utils.limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-security = HTTPBearer()
 
 
 # Password helpers
@@ -43,10 +41,22 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 # Dependency for current user
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
     user_repo = Depends(get_user_repository)
 ) -> dict:
-    token = credentials.credentials
+    token = request.cookies.get("access_token")
+    if not token:
+        # Fallback to header for dev/testing if needed, but prefer cookies
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+        
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
         user_id_str: str = payload.get("sub")
@@ -80,6 +90,7 @@ def generate_invite_code() -> str:
 @router.post("/register", response_model=Token)
 def register(
     user_create: UserCreate,
+    response: Response,
     user_repo = Depends(get_user_repository),
     family_repo = Depends(get_family_repository)
 ):
@@ -96,6 +107,13 @@ def register(
     role = user_create.role
 
     if user_create.family_name:
+        # Check registration token for new families
+        if user_create.registration_token != settings.REGISTRATION_TOKEN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid registration token. Creating a new family is restricted."
+            )
+            
         # Create a new family
         invite_code = generate_invite_code()
         # Keep checking for uniqueness (unlikely collisions, but safe)
@@ -138,12 +156,27 @@ def register(
     
     new_user = user_repo.create(user_data)
     token = create_access_token({"sub": str(new_user["id"])})
+    
+    # Set cookie for security
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        samesite="lax",
+        secure=settings.COOKIE_SECURE,
+    )
+    
     return {"access_token": token, "token_type": "bearer"}
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("5/minute")
 def login(
+    request: Request,
     user_login: UserLogin,
+    response: Response,
     user_repo = Depends(get_user_repository)
 ):
     user = user_repo.get_by_email(user_login.email)
@@ -154,9 +187,27 @@ def login(
         )
         
     token = create_access_token({"sub": str(user["id"])})
+    
+    # Set cookie for security
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        samesite="lax",
+        secure=settings.COOKIE_SECURE,
+    )
+    
     return {"access_token": token, "token_type": "bearer"}
 
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"message": "Logged out successfully"}

@@ -19,7 +19,8 @@ interface AuthContextType {
     email: string,
     password: string,
     familyName?: string,
-    inviteCode?: string
+    inviteCode?: string,
+    registrationToken?: string
   ) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -37,27 +38,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.data);
     } catch (error) {
       setUser(null);
-      localStorage.removeItem('cars_manager_token');
     }
   };
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('cars_manager_token');
-      if (token) {
-        await refreshUser();
-      }
+      await refreshUser();
       setLoading(false);
     };
     initAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await apiClient.post<{ access_token: string }>('/auth/login', {
+    await apiClient.post<{ access_token: string }>('/auth/login', {
       email,
       password,
     });
-    localStorage.setItem('cars_manager_token', response.data.access_token);
     await refreshUser();
   };
 
@@ -66,22 +62,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     password: string,
     familyName?: string,
-    inviteCode?: string
+    inviteCode?: string,
+    registrationToken?: string
   ) => {
-    const response = await apiClient.post<{ access_token: string }>('/auth/register', {
+    await apiClient.post<{ access_token: string }>('/auth/register', {
       name,
       email,
       password,
       role: familyName ? 'manager' : 'member',
       family_name: familyName || undefined,
       invite_code: inviteCode || undefined,
+      registration_token: registrationToken || undefined,
     });
-    localStorage.setItem('cars_manager_token', response.data.access_token);
     await refreshUser();
   };
 
-  const logout = () => {
-    localStorage.removeItem('cars_manager_token');
+  const logout = async () => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
     setUser(null);
   };
 

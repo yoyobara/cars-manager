@@ -36,6 +36,7 @@ class UserCreate(UserBase):
     role: str = "member"  # "manager" or "member"
     family_name: Optional[str] = None  # If creating a new family
     invite_code: Optional[str] = None  # If joining an existing family
+    registration_token: Optional[str] = None  # Required if creating a new family
 
 class UserLogin(BaseModel):
     email: EmailStr
