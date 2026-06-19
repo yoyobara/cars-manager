@@ -5,6 +5,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: cars_manager
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -19,13 +21,19 @@ services:
     environment:
       DATABASE_TYPE: postgres
       DATABASE_URL: postgresql://postgres:postgres@db:5432/cars_manager
+      JWT_SECRET: "development-secret-key-at-least-32-chars-long"
+      ALLOWED_ORIGINS: '["http://localhost", "http://localhost:4200", "http://localhost:80"]'
+      REGISTRATION_TOKEN: "secret-family-token"
+    ports:
+      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
     build:
-      context: ./apps/frontend
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile
     ports:
       - "80:80"
     depends_on:
