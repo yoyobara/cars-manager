@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -16,17 +17,16 @@ services:
   backend:
     build:
       context: ./apps/backend
+    restart: unless-stopped
     environment:
       DATABASE_TYPE: postgres
       DATABASE_URL: postgresql://postgres:postgres@db:5432/cars_manager
-      JWT_SECRET: "development-secret-key-at-least-32-chars-long"
-      ALLOWED_ORIGINS: '["http://localhost", "http://localhost:4200", "http://localhost:80"]'
-      REGISTRATION_TOKEN: "secret-family-token"
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: ./apps/frontend/Dockerfile
