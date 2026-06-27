@@ -49,3 +49,4 @@ Thumbs.db
 vite.config.*.timestamp*
 
 apps/backend/.env
+apps/frontend/.env
