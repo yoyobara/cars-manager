@@ -50,13 +50,13 @@ async def get_current_user(
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
-            
+
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
-        
+
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
         user_id_str: str = payload.get("sub")
@@ -113,13 +113,13 @@ def register(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Invalid registration token. Creating a new family is restricted."
             )
-            
+
         # Create a new family
         invite_code = generate_invite_code()
         # Keep checking for uniqueness (unlikely collisions, but safe)
         while family_repo.get_by_invite_code(invite_code) is not None:
             invite_code = generate_invite_code()
-            
+
         family = family_repo.create({
             "name": user_create.family_name,
             "invite_code": invite_code
@@ -127,7 +127,7 @@ def register(
         family_id = family["id"]
         # Creating a family automatically makes you the manager
         role = "manager"
-        
+
     elif user_create.invite_code:
         # Join existing family
         family = family_repo.get_by_invite_code(user_create.invite_code)
@@ -137,7 +137,7 @@ def register(
                 detail="Invalid family invite code"
             )
         family_id = family["id"]
-        
+
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -153,21 +153,21 @@ def register(
         "role": role,
         "family_id": family_id
     }
-    
+
     new_user = user_repo.create(user_data)
     token = create_access_token({"sub": str(new_user["id"])})
-    
+
     # Set cookie for security
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        # expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         samesite="lax",
         secure=settings.COOKIE_SECURE,
     )
-    
+
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -185,9 +185,9 @@ def login(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect email or password"
         )
-        
+
     token = create_access_token({"sub": str(user["id"])})
-    
+
     # Set cookie for security
     response.set_cookie(
         key="access_token",
@@ -198,7 +198,7 @@ def login(
         samesite="lax",
         secure=settings.COOKIE_SECURE,
     )
-    
+
     return {"access_token": token, "token_type": "bearer"}
 
 
