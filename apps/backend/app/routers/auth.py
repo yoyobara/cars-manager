@@ -18,12 +18,12 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 # Password helpers
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
     try:
-        return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+        return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
     except Exception:
         return False
 
@@ -34,15 +34,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.utcnow() + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 
 # Dependency for current user
 async def get_current_user(
-    request: Request,
-    user_repo = Depends(get_user_repository)
+    request: Request, user_repo=Depends(get_user_repository)
 ) -> dict:
     token = request.cookies.get("access_token")
     if not token:
@@ -58,7 +59,9 @@ async def get_current_user(
         )
 
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
         user_id_str: str = payload.get("sub")
         if user_id_str is None:
             raise HTTPException(
@@ -91,15 +94,15 @@ def generate_invite_code() -> str:
 def register(
     user_create: UserCreate,
     response: Response,
-    user_repo = Depends(get_user_repository),
-    family_repo = Depends(get_family_repository)
+    user_repo=Depends(get_user_repository),
+    family_repo=Depends(get_family_repository),
 ):
     # Check if email is already registered
     existing_user = user_repo.get_by_email(user_create.email)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email is already registered"
+            detail="Email is already registered",
         )
 
     # Validate family setup
@@ -111,7 +114,7 @@ def register(
         if user_create.registration_token != settings.REGISTRATION_TOKEN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid registration token. Creating a new family is restricted."
+                detail="Invalid registration token. Creating a new family is restricted.",
             )
 
         # Create a new family
@@ -120,10 +123,9 @@ def register(
         while family_repo.get_by_invite_code(invite_code) is not None:
             invite_code = generate_invite_code()
 
-        family = family_repo.create({
-            "name": user_create.family_name,
-            "invite_code": invite_code
-        })
+        family = family_repo.create(
+            {"name": user_create.family_name, "invite_code": invite_code}
+        )
         family_id = family["id"]
         # Creating a family automatically makes you the manager
         role = "manager"
@@ -134,14 +136,14 @@ def register(
         if not family:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid family invite code"
+                detail="Invalid family invite code",
             )
         family_id = family["id"]
 
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You must specify either family_name (to create a family) or invite_code (to join one)"
+            detail="You must specify either family_name (to create a family) or invite_code (to join one)",
         )
 
     # Create the user
@@ -151,7 +153,7 @@ def register(
         "email": user_create.email,
         "password_hash": password_hash,
         "role": role,
-        "family_id": family_id
+        "family_id": family_id,
     }
 
     new_user = user_repo.create(user_data)
@@ -163,8 +165,7 @@ def register(
         value=token,
         httponly=True,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        # expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        samesite="lax",
+        samesite="none",
         secure=settings.COOKIE_SECURE,
     )
 
@@ -177,13 +178,13 @@ def login(
     request: Request,
     user_login: UserLogin,
     response: Response,
-    user_repo = Depends(get_user_repository)
+    user_repo=Depends(get_user_repository),
 ):
     user = user_repo.get_by_email(user_login.email)
     if not user or not verify_password(user_login.password, user["password_hash"]):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect email or password"
+            detail="Incorrect email or password",
         )
 
     token = create_access_token({"sub": str(user["id"])})
@@ -194,8 +195,7 @@ def login(
         value=token,
         httponly=True,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        expires=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        samesite="lax",
+        samesite="none",
         secure=settings.COOKIE_SECURE,
     )
 
